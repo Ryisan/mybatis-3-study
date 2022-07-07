@@ -30,6 +30,7 @@ import org.apache.ibatis.session.Configuration;
 
 /**
  * @author Clinton Begin
+ * 包含sql执行语句的mapper核心处理类
  */
 public final class MappedStatement {
 

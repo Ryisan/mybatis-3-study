@@ -163,6 +163,7 @@ public class MapperAnnotationBuilder {
     // to prevent loading again a resource twice
     // this flag is set at XMLMapperBuilder#bindMapperForNamespace
     if (!configuration.isResourceLoaded("namespace:" + type.getName())) {
+      //如果没有加载，则spring会加载 以类的全限定路径命名的xml文件
       String xmlResource = type.getName().replace('.', '/') + ".xml";
       // #1347
       InputStream inputStream = type.getResourceAsStream("/" + xmlResource);
@@ -724,4 +725,5 @@ public class MapperAnnotationBuilder {
       return databaseId;
     }
   }
+
 }

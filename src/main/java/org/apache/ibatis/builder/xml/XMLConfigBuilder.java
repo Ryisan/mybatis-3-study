@@ -78,6 +78,7 @@ public class XMLConfigBuilder extends BaseBuilder {
     this(inputStream, environment, null);
   }
 
+  //xml配置构建
   public XMLConfigBuilder(InputStream inputStream, String environment, Properties props) {
     this(new XPathParser(inputStream, true, props, new XMLMapperEntityResolver()), environment, props);
   }
@@ -91,6 +92,10 @@ public class XMLConfigBuilder extends BaseBuilder {
     this.parser = parser;
   }
 
+  //解析成一个汇集所有配置的巨大 Configuration 类
+  //XML 配置文件中包含了对 MyBatis 系统的核心设置
+  // 包括获取数据库连接实例的数据源（DataSource）
+  // 以及决定事务作用域和控制方式的事务管理器（TransactionManager）等
   public Configuration parse() {
     if (parsed) {
       throw new BuilderException("Each XMLConfigBuilder can only be used once.");
@@ -103,6 +108,7 @@ public class XMLConfigBuilder extends BaseBuilder {
   private void parseConfiguration(XNode root) {
     try {
       // issue #117 read properties first
+      //属性可以在外部进行配置，并可以进行动态替换
       propertiesElement(root.evalNode("properties"));
       Properties settings = settingsAsProperties(root.evalNode("settings"));
       loadCustomVfs(settings);
@@ -114,9 +120,12 @@ public class XMLConfigBuilder extends BaseBuilder {
       reflectorFactoryElement(root.evalNode("reflectorFactory"));
       settingsElement(settings);
       // read it after objectFactory and objectWrapperFactory issue #631
+      // 环境配置，MyBatis 可以配置成适应多种环境，这种机制有助于将 SQL 映射应用于多种数据库之中
+      // 每个数据库对应一个 SqlSessionFactory 实例
       environmentsElement(root.evalNode("environments"));
       databaseIdProviderElement(root.evalNode("databaseIdProvider"));
       typeHandlerElement(root.evalNode("typeHandlers"));
+      //解析mapper接口方法对应的具体sql执行语句
       mapperElement(root.evalNode("mappers"));
     } catch (Exception e) {
       throw new BuilderException("Error parsing SQL Mapper Configuration. Cause: " + e, e);
@@ -160,7 +169,9 @@ public class XMLConfigBuilder extends BaseBuilder {
   private void typeAliasesElement(XNode parent) {
     if (parent != null) {
       for (XNode child : parent.getChildren()) {
+        //包的别名
         if ("package".equals(child.getName())) {
+          //包的路径
           String typeAliasPackage = child.getStringAttribute("name");
           configuration.getTypeAliasRegistry().registerAliases(typeAliasPackage);
         } else {
@@ -171,6 +182,7 @@ public class XMLConfigBuilder extends BaseBuilder {
             if (alias == null) {
               typeAliasRegistry.registerAlias(clazz);
             } else {
+              //缓存key=别名，value=类实例
               typeAliasRegistry.registerAlias(alias, clazz);
             }
           } catch (ClassNotFoundException e) {
@@ -184,6 +196,7 @@ public class XMLConfigBuilder extends BaseBuilder {
   private void pluginElement(XNode parent) throws Exception {
     if (parent != null) {
       for (XNode child : parent.getChildren()) {
+        //可配置拦截器，拦截器可作用在Executor,ParameterHandler,ResultSetHandler,StatementHandler
         String interceptor = child.getStringAttribute("interceptor");
         Properties properties = child.getChildrenAsProperties();
         Interceptor interceptorInstance = (Interceptor) resolveClass(interceptor).getDeclaredConstructor().newInstance();
@@ -222,6 +235,7 @@ public class XMLConfigBuilder extends BaseBuilder {
   private void propertiesElement(XNode context) throws Exception {
     if (context != null) {
       Properties defaults = context.getChildrenAsProperties();
+      //<properties resource="org/mybatis/example/config.properties" />
       String resource = context.getStringAttribute("resource");
       String url = context.getStringAttribute("url");
       if (resource != null && url != null) {
@@ -277,18 +291,24 @@ public class XMLConfigBuilder extends BaseBuilder {
   private void environmentsElement(XNode context) throws Exception {
     if (context != null) {
       if (environment == null) {
+        //默认使用的环境 ID（比如：default="development"）
         environment = context.getStringAttribute("default");
       }
       for (XNode child : context.getChildren()) {
         String id = child.getStringAttribute("id");
+        //每个 environment 元素定义的环境 ID（比如：id="development"）。
         if (isSpecifiedEnvironment(id)) {
+          //事务管理工厂
           TransactionFactory txFactory = transactionManagerElement(child.evalNode("transactionManager"));
+          //数据源工厂
           DataSourceFactory dsFactory = dataSourceElement(child.evalNode("dataSource"));
           DataSource dataSource = dsFactory.getDataSource();
           Environment.Builder environmentBuilder = new Environment.Builder(id)
               .transactionFactory(txFactory)
               .dataSource(dataSource);
+          //设置环境
           configuration.setEnvironment(environmentBuilder.build());
+          //一个SqlSessionFactory对应一个数据源环境，设置配置完成直接break
           break;
         }
       }
@@ -316,8 +336,10 @@ public class XMLConfigBuilder extends BaseBuilder {
 
   private TransactionFactory transactionManagerElement(XNode context) throws Exception {
     if (context != null) {
+      //获取事务管理类型
       String type = context.getStringAttribute("type");
       Properties props = context.getChildrenAsProperties();
+      //类解析，生成事务工厂实例
       TransactionFactory factory = (TransactionFactory) resolveClass(type).getDeclaredConstructor().newInstance();
       factory.setProperties(props);
       return factory;
@@ -327,8 +349,10 @@ public class XMLConfigBuilder extends BaseBuilder {
 
   private DataSourceFactory dataSourceElement(XNode context) throws Exception {
     if (context != null) {
+      //获取数据源类型
       String type = context.getStringAttribute("type");
       Properties props = context.getChildrenAsProperties();
+      //类解析，生成数据源工厂实例
       DataSourceFactory factory = (DataSourceFactory) resolveClass(type).getDeclaredConstructor().newInstance();
       factory.setProperties(props);
       return factory;
@@ -365,7 +389,13 @@ public class XMLConfigBuilder extends BaseBuilder {
 
   private void mapperElement(XNode parent) throws Exception {
     if (parent != null) {
+      //告诉MyBatis可以从resource，url，class，name查找资源
       for (XNode child : parent.getChildren()) {
+        //如果是从包路径获取mapper
+        //<!-- 将包内的映射器接口实现全部注册为映射器 -->
+        //<mappers>
+        //  <package name="org.mybatis.builder"/>
+        //</mappers>
         if ("package".equals(child.getName())) {
           String mapperPackage = child.getStringAttribute("name");
           configuration.addMappers(mapperPackage);
@@ -396,6 +426,7 @@ public class XMLConfigBuilder extends BaseBuilder {
     }
   }
 
+  //每个 environment 元素定义的环境 ID（比如：id="development"）。
   private boolean isSpecifiedEnvironment(String id) {
     if (environment == null) {
       throw new BuilderException("No environment specified.");

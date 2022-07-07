@@ -91,6 +91,7 @@ public class PooledDataSource implements DataSource {
 
   @Override
   public Connection getConnection(String username, String password) throws SQLException {
+    //从pool弹出一个connection
     return popConnection(username, password).getProxyConnection();
   }
 
@@ -435,6 +436,7 @@ public class PooledDataSource implements DataSource {
             }
           } else {
             // Cannot create new connection
+            //从连接池获取一个connection
             PooledConnection oldestActiveConnection = state.activeConnections.get(0);
             long longestCheckoutTime = oldestActiveConnection.getCheckoutTime();
             if (longestCheckoutTime > poolMaximumCheckoutTime) {

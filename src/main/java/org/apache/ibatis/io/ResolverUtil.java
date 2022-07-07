@@ -144,6 +144,7 @@ public class ResolverUtil<T> {
   }
 
   /** The set of matches being accumulated. */
+  //积聚所有匹配的类
   private Set<Class<? extends T>> matches = new HashSet<>();
 
   /**
@@ -276,6 +277,7 @@ public class ResolverUtil<T> {
    * resolved classes if and only if it is approved by the Test supplied.
    *
    * @param test the test used to determine if the class matches
+   *             决定类是否匹配
    * @param fqn the fully qualified name of a class
    */
   @SuppressWarnings("unchecked")
@@ -287,6 +289,7 @@ public class ResolverUtil<T> {
         log.debug("Checking to see if class " + externalName + " matches criteria [" + test + "]");
       }
 
+      //类加载
       Class<?> type = loader.loadClass(externalName);
       if (test.matches(type)) {
         matches.add((Class<T>) type);

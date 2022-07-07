@@ -51,6 +51,7 @@ public class XMLScriptBuilder extends BaseBuilder {
   }
 
 
+  //初始化动态 SQL标签
   private void initNodeHandlerMap() {
     nodeHandlerMap.put("trim", new TrimHandler());
     nodeHandlerMap.put("where", new WhereHandler());

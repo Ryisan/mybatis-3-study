@@ -29,6 +29,7 @@ import org.apache.ibatis.transaction.Transaction;
 
 /**
  * @author Clinton Begin
+ * 具体处理sql语句的执行器
  */
 public interface Executor {
 

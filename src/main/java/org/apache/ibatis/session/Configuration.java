@@ -182,6 +182,7 @@ public class Configuration {
     this.environment = environment;
   }
 
+  //初始化内置的类型-别名映射
   public Configuration() {
     typeAliasRegistry.registerAlias("JDBC", JdbcTransactionFactory.class);
     typeAliasRegistry.registerAlias("MANAGED", ManagedTransactionFactory.class);

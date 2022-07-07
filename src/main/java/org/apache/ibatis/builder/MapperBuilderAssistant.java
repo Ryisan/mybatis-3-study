@@ -51,6 +51,7 @@ import org.apache.ibatis.type.TypeHandler;
 
 /**
  * @author Clinton Begin
+ * mapper帮助类
  */
 public class MapperBuilderAssistant extends BaseBuilder {
 
@@ -93,6 +94,7 @@ public class MapperBuilderAssistant extends BaseBuilder {
       }
     } else {
       // is it qualified with this namespace yet?
+      //最大性兼容，是否符合命名空间
       if (base.startsWith(currentNamespace + ".")) {
         return base;
       }

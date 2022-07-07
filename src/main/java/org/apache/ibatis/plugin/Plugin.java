@@ -18,12 +18,19 @@ package org.apache.ibatis.plugin;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.ibatis.executor.BaseExecutor;
+import org.apache.ibatis.executor.Executor;
+import org.apache.ibatis.executor.SimpleExecutor;
 import org.apache.ibatis.reflection.ExceptionUtil;
+import org.apache.ibatis.session.Configuration;
+import org.apache.ibatis.transaction.Transaction;
 import org.apache.ibatis.util.MapUtil;
 
 /**
@@ -46,6 +53,7 @@ public class Plugin implements InvocationHandler {
     Class<?> type = target.getClass();
     Class<?>[] interfaces = getAllInterfaces(type, signatureMap);
     if (interfaces.length > 0) {
+      //生成动态代理对象
       return Proxy.newProxyInstance(
           type.getClassLoader(),
           interfaces,
@@ -59,6 +67,7 @@ public class Plugin implements InvocationHandler {
     try {
       Set<Method> methods = signatureMap.get(method.getDeclaringClass());
       if (methods != null && methods.contains(method)) {
+        //拦截指定的方法
         return interceptor.intercept(new Invocation(target, method, args));
       }
       return method.invoke(target, args);
@@ -74,8 +83,10 @@ public class Plugin implements InvocationHandler {
       throw new PluginException("No @Intercepts annotation was found in interceptor " + interceptor.getClass().getName());
     }
     Signature[] sigs = interceptsAnnotation.value();
+    //构造map，key=class实例，value=被拦截的方法
     Map<Class<?>, Set<Method>> signatureMap = new HashMap<>();
     for (Signature sig : sigs) {
+      //类的方法
       Set<Method> methods = MapUtil.computeIfAbsent(signatureMap, sig.type(), k -> new HashSet<>());
       try {
         Method method = sig.type().getMethod(sig.method(), sig.args());
@@ -90,7 +101,9 @@ public class Plugin implements InvocationHandler {
   private static Class<?>[] getAllInterfaces(Class<?> type, Map<Class<?>, Set<Method>> signatureMap) {
     Set<Class<?>> interfaces = new HashSet<>();
     while (type != null) {
+      //获取target类实现的所有接口
       for (Class<?> c : type.getInterfaces()) {
+        //判断拦截器 interceptor 是否包含被拦截的 target类
         if (signatureMap.containsKey(c)) {
           interfaces.add(c);
         }

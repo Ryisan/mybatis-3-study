@@ -64,6 +64,7 @@ public class XMLStatementBuilder extends BaseBuilder {
     String nodeName = context.getNode().getNodeName();
     SqlCommandType sqlCommandType = SqlCommandType.valueOf(nodeName.toUpperCase(Locale.ENGLISH));
     boolean isSelect = sqlCommandType == SqlCommandType.SELECT;
+    //非查询，刷新缓存
     boolean flushCache = context.getBooleanAttribute("flushCache", !isSelect);
     boolean useCache = context.getBooleanAttribute("useCache", isSelect);
     boolean resultOrdered = context.getBooleanAttribute("resultOrdered", false);
@@ -71,19 +72,22 @@ public class XMLStatementBuilder extends BaseBuilder {
     // Include Fragments before parsing
     XMLIncludeTransformer includeParser = new XMLIncludeTransformer(configuration, builderAssistant);
     includeParser.applyIncludes(context.getNode());
-
+    //sql传入参数类型
     String parameterType = context.getStringAttribute("parameterType");
+    //参数类型加载
     Class<?> parameterTypeClass = resolveClass(parameterType);
-
+    //语言
     String lang = context.getStringAttribute("lang");
     LanguageDriver langDriver = getLanguageDriver(lang);
 
     // Parse selectKey after includes and remove them.
+    //处理selectKey节点
     processSelectKeyNodes(id, parameterTypeClass, langDriver);
 
     // Parse the SQL (pre: <selectKey> and <include> were parsed and removed)
     KeyGenerator keyGenerator;
     String keyStatementId = id + SelectKeyGenerator.SELECT_KEY_SUFFIX;
+    //唯一id，keyStatementId = namespace + methodId
     keyStatementId = builderAssistant.applyCurrentNamespace(keyStatementId, true);
     if (configuration.hasKeyGenerator(keyStatementId)) {
       keyGenerator = configuration.getKeyGenerator(keyStatementId);
@@ -119,6 +123,7 @@ public class XMLStatementBuilder extends BaseBuilder {
   private void processSelectKeyNodes(String id, Class<?> parameterTypeClass, LanguageDriver langDriver) {
     List<XNode> selectKeyNodes = context.evalNodes("selectKey");
     if (configuration.getDatabaseId() != null) {
+      //解析selectKey节点
       parseSelectKeyNodes(id, selectKeyNodes, parameterTypeClass, langDriver, configuration.getDatabaseId());
     }
     parseSelectKeyNodes(id, selectKeyNodes, parameterTypeClass, langDriver, null);
@@ -135,6 +140,12 @@ public class XMLStatementBuilder extends BaseBuilder {
     }
   }
 
+  //<insert id="insertTable2WithSelectKeyWithKeyMapXml">
+  //    <selectKey keyProperty="nameId,generatedName" keyColumn="ID,NAME_FRED" order="AFTER" resultType="java.util.Map">
+  //      select id, name_fred from table2 where id = identity()
+  //    </selectKey>
+  //    insert into table2 (name) values(#{name})
+  //  </insert>
   private void parseSelectKeyNode(String id, XNode nodeToHandle, Class<?> parameterTypeClass, LanguageDriver langDriver, String databaseId) {
     String resultType = nodeToHandle.getStringAttribute("resultType");
     Class<?> resultTypeClass = resolveClass(resultType);
