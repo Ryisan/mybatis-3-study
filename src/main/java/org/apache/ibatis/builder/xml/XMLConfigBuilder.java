@@ -389,17 +389,28 @@ public class XMLConfigBuilder extends BaseBuilder {
 
   private void mapperElement(XNode parent) throws Exception {
     if (parent != null) {
-      //告诉MyBatis可以从resource，url，class，name查找资源
+
       for (XNode child : parent.getChildren()) {
         //如果是从包路径获取mapper
         //<!-- 将包内的映射器接口实现全部注册为映射器 -->
-        //<mappers>
-        //  <package name="org.mybatis.builder"/>
-        //</mappers>
+        /*
+        <mappers>
+          <package name="org.mybatis.builder"/>
+        </mappers>
+        */
         if ("package".equals(child.getName())) {
           String mapperPackage = child.getStringAttribute("name");
           configuration.addMappers(mapperPackage);
         } else {
+          //告诉MyBatis可以从resource，url，class，name查找资源
+          /**
+           *
+           * <mappers>
+           *   <mapper resource="org/mybatis/builder/BlogMapper.xml"/>
+           *   <mapper url="file:///var/mappers/BlogMapper.xml"/>
+           *   <mapper class="org.mybatis.builder.BlogMapper"/>
+           * </mappers>
+           */
           String resource = child.getStringAttribute("resource");
           String url = child.getStringAttribute("url");
           String mapperClass = child.getStringAttribute("class");
